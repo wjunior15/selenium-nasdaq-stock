@@ -1,0 +1,40 @@
+version: "3.8"
+# Docker Compose file for Selenium Bot with Redis
+services:
+  selenium-bot:
+    build: .
+    container_name: selenium-bot
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    restart: always
+    networks:
+      - backend
+
+  redis:
+    image: bitnami/redis:latest
+    container_name: redis
+    environment:
+      - ALLOW_EMPTY-PASSWORD=yes
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '300M'
+
+    volumes:
+      - polls_redis_data:/bitnami/redis/data
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  polls_redis_data:
