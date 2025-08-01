@@ -45,9 +45,10 @@ def set_redis_data(in_df):
         REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
         REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
-        r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+        """r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         r.set('nasdaq_data', str_json)
-        print("Data set in Redis.")
+        print("Data set in Redis.")"""
+        print(str_json)
     except Exception as e:
         print(f"Error setting data in Redis: {e}")
 
@@ -60,7 +61,7 @@ def main():
         while True:
             try:             
                 driver.get("https://www.investing.com/indices/nq-100-components")
-                print("Opened CNBC NASDAQ 100 page.")
+                print("Opened", driver.title)
 
                 stock_table = driver.find_elements(By.TAG_NAME, "table")
                 print("Found stock table on the page. - Tables found:", len(stock_table))
@@ -84,9 +85,6 @@ def main():
 
                 set_redis_data(df)
 
-                driver.close()
-                print("WebDriver closed after data extraction.")
-            
             except Exception as e:
                 print(f"Error during web extraction: {e}")
                 break
