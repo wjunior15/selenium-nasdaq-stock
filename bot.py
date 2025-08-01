@@ -20,8 +20,8 @@ def setup_webdriver():
     # Set up Chrome WebDriver
     try:
         options = Options()
-        #options.add_experimental_option("detach", True)  # Keep browser open after script ends
         options.add_argument("--headless-new")  # Run in background
+        options.add_argument("--log-level=3") #Reduce webdriver logs - 3 = FATAL only
         options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ...") # Set a custom user agent
 
         service = Service(ChromeDriverManager().install())
