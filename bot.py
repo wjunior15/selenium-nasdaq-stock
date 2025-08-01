@@ -41,14 +41,15 @@ def set_redis_data(in_df):
 
     try:
         str_json = in_df.iloc[:5].to_json(orient="records", lines=True)
+        print(str_json)
 
         REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
         REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
-        """r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+        r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         r.set('nasdaq_data', str_json)
-        print("Data set in Redis.")"""
-        print(str_json)
+        print("Data set in Redis.")
+        
     except Exception as e:
         print(f"Error setting data in Redis: {e}")
 
