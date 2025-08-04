@@ -4,6 +4,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from datetime import datetime
 import pandas as pd
 import redis
 import os
@@ -15,18 +17,19 @@ def setup_webdriver():
     """
     
     # Clean the webdriver cache - commented out for now
-    clean_webdriver_cache()
+    #clean_webdriver_cache()
     
     # Set up Chrome WebDriver
     try:
         options = Options()
         options.add_argument("--headless-new")  # Run in background
         options.add_argument("--log-level=3") #Reduce webdriver logs - 3 = FATAL only
-        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ...") # Set a custom user agent
 
-        service = Service(ChromeDriverManager().install())
+        #service = Service(ChromeDriverManager().install())
 
-        driver = webdriver.Chrome(service=service, options=options)
+        #Set webdriver for remote execution
+        driver = webdriver.Remote(command_executor="http://localhost:4444/wd/hub",
+                                  options=options)
         print("WebDriver setup successfully.")
         return driver
     
@@ -43,15 +46,45 @@ def set_redis_data(in_df):
         str_json = in_df.iloc[:5].to_json(orient="records", lines=True)
         print(str_json)
 
+        int_timestamp = int(datetime.now().timestamp())
+        print(f"Atualização Cache: {int_timestamp}")
+
         REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
         REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
         r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         r.set('nasdaq_data', str_json)
         print("Data set in Redis.")
+
+        r.set('timestamp', int_timestamp)
         
     except Exception as e:
         print(f"Error setting data in Redis: {e}")
+
+def validate_cache_timestamp():
+    """
+    Validates the timestamp in Redis cache.
+    """
+
+    try:
+        REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+        REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+
+        r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+        int_cache_time = int(r.get('timestamp'))
+        if int_cache_time:
+            int_now_time = int(datetime.now().timestamp())
+            int_diff = int_now_time - int_cache_time
+            if int_diff < 300:
+                print("Cache is valid.")
+                return True
+        
+        print("Cache is invalid or expired.")
+        return False
+        
+    except Exception as e:
+        print(f"Error validating cache timestamp: {e}")
+        return False
 
 
 def main():
@@ -59,8 +92,8 @@ def main():
     driver = setup_webdriver()
     if driver:
 
-        while True:
-            try:             
+        try:
+            if not validate_cache_timestamp():
                 driver.get("https://www.investing.com/indices/nq-100-components")
                 print("Opened", driver.title)
 
@@ -86,12 +119,12 @@ def main():
 
                 set_redis_data(df)
 
-            except Exception as e:
-                print(f"Error during web extraction: {e}")
-                break
+        except Exception as e:
+            print(f"Error during web extraction: {e}")
 
-        driver.quit()
-        print("WebDriver Quit.")
+        finally:
+            driver.quit()
+            print("WebDriver Quit.")
         
 
 
