@@ -1,5 +1,6 @@
 from selenium import webdriver
 from tools.webdriver import clean_webdriver_cache
+from tools.process_data import order_by_change
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -91,7 +92,6 @@ def main():
 
     driver = setup_webdriver()
     if driver:
-
         try:
             if not validate_cache_timestamp():
                 driver.get("https://www.investing.com/indices/nq-100-components")
@@ -116,8 +116,11 @@ def main():
                 df = df.dropna()
                 df.columns = ["Symbol", "Name", "Last Price", "High", "Low", "Change %", "Volume", "Upside", "Time"]
                 df.drop(columns=["Symbol", "Upside"], inplace=True)
+                df = order_by_change(df)
+                print("DataFrame ordered by Change %.")
 
-                set_redis_data(df)
+                if not df.empty:
+                    set_redis_data(df)
 
         except Exception as e:
             print(f"Error during web extraction: {e}")
