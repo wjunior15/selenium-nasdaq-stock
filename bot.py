@@ -25,11 +25,20 @@ def setup_webdriver():
         options = Options()
         options.add_argument("--headless-new")  # Run in background
         options.add_argument("--log-level=3") #Reduce webdriver logs - 3 = FATAL only
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+
 
         #service = Service(ChromeDriverManager().install())
 
         #Set webdriver for remote execution
-        driver = webdriver.Remote(command_executor="http://localhost:4444/wd/hub",
+        SELENIUM_HOST = os.getenv("SELENIUM_HOST", "localhost")
+        SELENIUM_PORT = os.getenv("SELENIUM_PORT", "4444")
+        
+        driver = webdriver.Remote(command_executor=f"http://{SELENIUM_HOST}:{SELENIUM_PORT}/wd/hub",
                                   options=options)
         print("WebDriver setup successfully.")
         return driver
