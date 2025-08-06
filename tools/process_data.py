@@ -6,7 +6,7 @@ def order_by_change(in_df):
     """
     try:
         in_df["Change %"] = in_df["Change %"].str.replace('%', '').astype(float)
-        in_df["Change %"].fillna(0, inplace=True)
+        #in_df["Change %"].fillna(0, inplace=True)
         in_df.rename(columns={"Change %": "Change"}, inplace=True)
 
         ordered_df = in_df.sort_values(by='Change', ascending=False)

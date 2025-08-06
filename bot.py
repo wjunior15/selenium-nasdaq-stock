@@ -10,6 +10,10 @@ from datetime import datetime
 import pandas as pd
 import redis
 import os
+from config import config
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def setup_webdriver():
     """
@@ -17,30 +21,38 @@ def setup_webdriver():
     Cleans the webdriver cache before setup.
     """
     
-    # Clean the webdriver cache - commented out for now
-    #clean_webdriver_cache()
-    
     # Set up Chrome WebDriver
     try:
         options = Options()
         options.add_argument("--headless-new")  # Run in background
         options.add_argument("--log-level=3") #Reduce webdriver logs - 3 = FATAL only
-        options.add_argument("--disable-gpu")
-        options.add_argument("--disable-extensions")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-blink-features=AutomationControlled")
 
+        str_executor_type = config.EXECUTOR_TYPE.lower()
 
-        #service = Service(ChromeDriverManager().install())
+        if str_executor_type == "remote":
+            options.add_argument("--disable-gpu")
+            options.add_argument("--disable-extensions")
+            options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-blink-features=AutomationControlled")
 
-        #Set webdriver for remote execution
-        SELENIUM_HOST = os.getenv("SELENIUM_HOST", "localhost")
-        SELENIUM_PORT = os.getenv("SELENIUM_PORT", "4444")
+            #Set webdriver for remote execution
+            SELENIUM_HOST = config.SELENIUM_HOST
+            SELENIUM_PORT = config.SELENIUM_PORT
         
-        driver = webdriver.Remote(command_executor=f"http://{SELENIUM_HOST}:{SELENIUM_PORT}/wd/hub",
+            driver = webdriver.Remote(command_executor=f"http://{SELENIUM_HOST}:{SELENIUM_PORT}/wd/hub",
                                   options=options)
-        print("WebDriver setup successfully.")
+            print("Remote WebDriver setup successfully.")
+            return driver
+        
+        #Set webdriver for local execution
+
+        clean_webdriver_cache()  # Clean the WebDriver cache before setup
+        
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)
+
+        print("Local WebDriver setup successfully.")
         return driver
     
     except Exception as e:
@@ -59,8 +71,8 @@ def set_redis_data(in_df):
         int_timestamp = int(datetime.now().timestamp())
         print(f"Atualização Cache: {int_timestamp}")
 
-        REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-        REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+        REDIS_HOST = config.REDIS_HOST
+        REDIS_PORT = config.REDIS_PORT
 
         r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         r.set('nasdaq_data', str_json)
