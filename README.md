@@ -19,3 +19,7 @@ Para boa execução do código é necessário a execução de dois containers do
 docker run --name redis -e ALLOW_EMPTY_PASSWORD=yes -p 6379:6379 bitnami/redis:latest
 
 docker run -d -p 4444:4444 -v /dev/shm:/dev/shm selenium/standalone-chrome
+
+## Próximas Implementações
+
+- Realizar requisições via api (FAST ou Flask)
